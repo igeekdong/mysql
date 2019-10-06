@@ -34,7 +34,7 @@
 					
 	登陆：
 	mysql -u root -p
-
+	
 	数据库存放目录：
 	ps -ef|grep mysql  可以看到：
 		数据库目录：     datadir=/var/lib/mysql 
@@ -107,7 +107,7 @@
 	
 		解析过程：			
 			from .. on.. join ..where ..group by ....having ...select dinstinct ..order by limit ...
-
+	
 	b.SQL优化， 主要就是 在优化索引
 		索引： 相当于书的目录
 		索引： index是帮助MYSQL高效获取数据的数据结构。索引是数据结构（树：B树(默认)、Hash树...）
@@ -123,6 +123,12 @@
 https://www.cnblogs.com/annsshadow/p/5037667.html
 
 #4.索引
+
+​	查看索引 ：  show index from 表名
+
+​	查看表结构：`desc 表名`
+
+​	查看建表语句：`show create table 表名`
 
 ​	分类：
 		主键索引：  不能重复。id    不能是null
@@ -149,7 +155,7 @@ https://www.cnblogs.com/annsshadow/p/5037667.html
 		alter table tb add index dept_name_index(dept,name);
 	
 		注意：如果一个字段是primary key，则该字段默认就是 主键索引	
-
+	
 		删除索引：
 		drop index 索引名 on 表名 ;
 		drop index name_index on tb ;
@@ -164,7 +170,6 @@ https://www.cnblogs.com/annsshadow/p/5037667.html
 	b.MySQL查询优化其会干扰我们的优化
 
 	优化方法，官网：https://dev.mysql.com/doc/refman/5.5/en/optimization.html
-
 
 	查询执行计划：  explain +SQL语句
 			explain  select  * from tb ;
@@ -460,7 +465,6 @@ explain select *from test02 where a2='' order by a1 ; --using filesort
 		alter table test02 add index idx_a1_a2(a1,a2) ;
 		explain select a1,a3 from test02 where a1='' or a3= '' ;
 
-
 		如果用到了索引覆盖(using index时)，会对 possible_keys和key造成影响：
 		a.如果没有where，则索引只出现在key中；
 		b.如果有where，则索引 出现在key和possible_keys中。
@@ -473,7 +477,7 @@ explain select *from test02 where a2='' order by a1 ; --using filesort
 		但查询语句select age,name from ...where age =...,此语句中必须回原表查Name，因此会显示using where.
 		
 	explain select a1,a3 from test02 where a3 = '' ; --a3需要回原表查询
-
+	
 	(iv). impossible where ： where子句永远为false
 		explain select * from test02 where a1='x' and a1='y'  ;
 
@@ -515,7 +519,6 @@ commit;
 	drop index idx_tab on book;
 	alter table book add index idx_atb (authorid,typeid,bid);
 	explain select bid from book where  authorid=1 and  typeid in(2,3) order by typeid desc ;
-
 
 	--小结：	a.最佳做前缀，保持索引的定义和使用的顺序一致性  b.索引需要逐步优化  c.将含In的范围查询 放到where条件的最后，防止失效。
 	
@@ -560,7 +563,7 @@ commit;
 	where   小表.x 10 = 大表.y 300;  --循环了几次？10
 		
 		大表.y 300=小表.x 10	--循环了300次
-
+	
 	小表:10
 	大表:300
 	
@@ -572,7 +575,7 @@ commit;
 			...
 		}
 	}
-
+	
 	select ...where 大表.x300=小表.x10 ;
 	for(int i=0;i<大表.length300;i++)
 	{
@@ -590,7 +593,7 @@ commit;
 	
 	alter table teacher2 add index index_teacher2_cid(cid) ;
 	alter table course2 add index index_course2_cname(cname);
-
+	
 	Using join buffer:extra中的一个选项，作用：Mysql引擎使用了 连接缓存。
 
 （3）三张表优化A B C
@@ -618,14 +621,12 @@ alter table test03 add index idx_a1_a2_a3_4(a1,a2,a3,a4) ;
 	
 	explain select a1,a2,a3,a4 from test03 where a1=1 and a4=4 order by a3; 
 	--以上SQL出现了 using filesort(文件内排序，“多了一次额外的查找/排序”) ：不要跨列使用( where和order by 拼起来，不要跨列使用)
-
+	
 	explain select a1,a2,a3,a4 from test03 where a1=1 and a4=4 order by a2 , a3; --不会using filesort
-
 
 	--总结：i.如果 (a,b,c,d)复合索引  和使用的顺序全部一致(且不跨列使用)，则复合索引全部使用。如果部分一致(且不跨列使用)，则使用部分索引。
 	select a,c where  a = and b= and d= 
 		ii.where和order by 拼起来，不要跨列使用 
-
 
 	using temporary:需要额外再多使用一张表. 一般出现在group by语句中；已经有表了，但不适用，必须再来一张表。
 解析过程：			
@@ -664,7 +665,6 @@ from .. on.. join ..where ..group by ....having ...select dinstinct ..order by l
 	explain select * from book where authorid != 1 and typeid =2 ;
 	explain select * from book where authorid != 1 and typeid !=2 ;
 
-
 	体验概率情况(< > =)：原因是服务层中有SQL优化器，可能会影响我们的优化。
 	drop index idx_typeid on book;
 	drop index idx_authroid on book;
@@ -691,7 +691,7 @@ from .. on.. join ..where ..group by ....having ...select dinstinct ..order by l
 	explain select * from teacher  where tname like 'x%';
 	 
 	explain select tname from teacher  where tname like '%x%'; --如果必须使用like '%x%'进行模糊查询，可以使用索引覆盖 挽救一部分。
-
+	
 	（6）尽量不要使用类型转换（显示、隐式），否则索引失效
 	explain select * from teacher where tname = 'abc' ;
 	explain select * from teacher where tname = 123 ;//程序底层将 123 -> '123'，即进行了类型转换，因此索引失效
@@ -715,12 +715,11 @@ from .. on.. join ..where ..group by ....having ...select dinstinct ..order by l
 	select tname from teacher where exists (select * from teacher) ; 
 	--等价于select tname from teacher
 
-
 	select tname from teacher where exists (select * from teacher where tid =9999) ;
 	
 	in:
 	select ..from table where tid in  (1,3,5) ;
-
+	
 	（2）order by 优化
 	using filesort 有两种算法：双路排序、单路排序 （根据IO的次数）
 	MySQL4.1之前 默认使用 双路排序；双路：扫描2次磁盘（1：从磁盘读取排序字段 ,对排序字段进行排序（在buffer中进行的排序）   2：扫描其他字段 ）
@@ -756,7 +755,6 @@ from .. on.. join ..where ..group by ....having ...select dinstinct ..order by l
 		slow_query_log=1
 		slow_query_log_file=/var/lib/mysql/localhost-slow.log
 
-
 	慢查询阀值：
 		show variables like '%long_query_time%' ;
 	
@@ -769,7 +767,7 @@ from .. on.. join ..where ..group by ....having ...select dinstinct ..order by l
 		vi /etc/my.cnf 
 		[mysqld]
 		long_query_time=3
-
+	
 	select sleep(4);
 	select sleep(5);
 	select sleep(3);
@@ -785,7 +783,7 @@ from .. on.. join ..where ..group by ....having ...select dinstinct ..order by l
 	r:逆序
 	l:锁定时间
 	g:正则匹配模式		
-
+	
 	--获取返回记录最多的3个SQL
 		mysqldumpslow -s r -t 3  /var/lib/mysql/localhost-slow.log
 	
@@ -860,7 +858,6 @@ deptno int(5) not null default 0
 	
 	end $
 
-
 	--通过存储过程插入海量数据：emp表中  ，  10000,   100000
 	create procedure insert_emp( in eid_start int(10),in data_times int(10))
 	begin 
@@ -875,7 +872,7 @@ deptno int(5) not null default 0
 		end repeat ;
 		commit ;
 	end $
-
+	
 	--通过存储过程插入海量数据：dept表中  
 		create procedure insert_dept(in dno_start int(10) ,in data_times int(10))
 		begin
@@ -888,14 +885,13 @@ deptno int(5) not null default 0
 				until i=data_times
 			end repeat ;
 		commit ;
-
+	
 		end$
-
+	
 	--插入数据
 		delimiter ; 
 		call insert_emp(1000,800000) ;
 		call insert_dept(10,30) ;
-
 
 	b.分析海量数据:
 	（1）profiles
@@ -919,7 +915,7 @@ deptno int(5) not null default 0
 		set global log_output='file' ;
 		set global general_log = on ;
 		set global general_log_file='/tmp/general.log' ;
-
+	
 		开启后，会记录所有SQL ： 会被记录 mysql.general_log表中。
 			select * from  mysql.general_log ;
 
@@ -979,7 +975,7 @@ commit;
 		会话1（其他会话）：
 			select * from tablelock;   --读（查），可以
 			delete from tablelock where id =1 ; --写，会“等待”会话0将锁释放
-
+	
 		会话1（其他会话）：
 			select * from emp ;  --读（查），可以
 			delete from emp where eno = 1; --写，可以
@@ -988,7 +984,6 @@ commit;
 				会话0给A表加了锁；其他会话的操作：a.可以对其他表（A表以外的表）进行读、写操作
 								b.对A表：读-可以；  写-需要等待释放锁。
 		释放锁: unlock tables ;
-
 
 	===加写锁：
 		会话0：
@@ -1019,7 +1014,7 @@ b、对MyISAM表的写操作（加写锁），会阻塞其他进程（会话）�
 
 ​	
 
-（2）行表（InnoDB）
+（2）行锁（InnoDB）
 create table linelock(
 id int(5) primary key auto_increment,
 name varchar(20)
@@ -1056,19 +1051,17 @@ insert into linelock(name) values('5')  ;
 	会话1： 写操作， 不同的数据
 		update linelock set name='ax' where id = 5;
 		行锁，一次锁一行数据；因此 如果操作的是不同数据，则不干扰。
-
+	
 	行锁的注意事项：
 	a.如果没有索引，则行锁会转为表锁
 	show index from linelock ;
 	alter table linelock add index idx_linelock_name(name);
-
 
 	会话0： 写操作
 		update linelock set name = 'ai' where name = '3' ;
 		
 	会话1： 写操作， 不同的数据
 		update linelock set name = 'aiX' where name = '4' ;
-
 
 	会话0： 写操作
 		update linelock set name = 'ai' where name = 3 ;
@@ -1084,7 +1077,6 @@ insert into linelock(name) values('5')  ;
 	 update linelock set name ='x' where id >1 and id<9 ;   --即在此where范围中，没有id=7的数据，则id=7的数据成为间隙。
 	间隙：Mysql会自动给 间隙 加索 ->间隙锁。即 本题 会自动给id=7的数据加 间隙锁（行锁）。
 	行锁：如果有where，则实际加索的范围 就是where后面的范围（不是实际的值）
-
 
 	如何仅仅是查询数据，能否加锁？ 可以   for update 
 	研究学习时，将自动提交关闭：
@@ -1125,14 +1117,13 @@ insert into linelock(name) values('5')  ;
 			安装时，如果出现未响应：  则重新打开D:\MySQL\MySQL Server 5.5\bin\MySQLInstanceConfig.exe
 	
 		图形化客户端： SQLyog, Navicat
-
+	
 		如果要远程连接数据库，则需要授权远程访问。 
 		授权远程访问 :(A->B,则再B计算机的Mysql中执行以下命令)
 		GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'root' WITH GRANT OPTION;
 		FLUSH PRIVILEGES;
 	
 		如果仍然报错：可能是防火墙没关闭 ：  在B关闭防火墙  service iptables stop 
-
 
 	实现主从同步（主从复制）：图
 		1.master将改变的数 记录在本地的 二进制日志中（binary log） ；该过程 称之为：二进制日志件事
